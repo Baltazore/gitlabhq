@@ -3,34 +3,34 @@
 cd $(dirname $0)/..
 app_root=$(pwd)
 
-unicorn_pidfile="$app_root/tmp/pids/unicorn.pid"
-unicorn_config="$app_root/config/unicorn.rb"
+thin_pidfile="$app_root/tmp/pids/thin.pid"
+thin_config="$app_root/config/thin.yml"
 
-function get_unicorn_pid
+function get_thin_pid
 {
-  local pid=$(cat $unicorn_pidfile)
+  local pid=$(cat $thin_pidfile)
   if [ -z $pid ] ; then
-    echo "Could not find a PID in $unicorn_pidfile"
+    echo "Could not find a PID in $thin_pidfile"
     exit 1
   fi
-  unicorn_pid=$pid
+  thin_pid=$pid
 }
 
 function start
 {
-  bundle exec unicorn_rails -D -c $unicorn_config -E $RAILS_ENV
+  bundle exec thin -C $thin_config -E $RAILS_ENV
 }
 
 function stop
 {
-  get_unicorn_pid
-  kill -QUIT $unicorn_pid
+  get_thin_pid
+  kill -QUIT $thin_pid
 }
 
 function reload
 {
-  get_unicorn_pid
-  kill -USR2 $unicorn_pid
+  get_thin_pid
+  kill -USR2 $thin_pid
 }
 
 case "$1" in

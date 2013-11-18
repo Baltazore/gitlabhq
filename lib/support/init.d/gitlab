@@ -24,7 +24,7 @@ app_user="git"
 app_root="/home/$app_user/gitlab"
 pid_path="$app_root/tmp/pids"
 socket_path="$app_root/tmp/sockets"
-web_server_pid_path="$pid_path/unicorn.pid"
+web_server_pid_path="$pid_path/thin.pid"
 sidekiq_pid_path="$pid_path/sidekiq.pid"
 
 
@@ -50,7 +50,7 @@ check_pids(){
     echo "Could not create the path $pid_path needed to store the pids."
     exit 1
   fi
-  # If there exists a file which should hold the value of the Unicorn pid: read it.
+  # If there exists a file which should hold the value of the Thin pid: read it.
   if [ -f "$web_server_pid_path" ]; then
     wpid=$(cat "$web_server_pid_path")
   else
@@ -117,7 +117,7 @@ check_stale_pids(){
   # If there is a pid it is something else than 0, the service is running if
   # *_status is == 0.
   if [ "$wpid" != "0" -a "$web_status" != "0" ]; then
-    echo "Removing stale Unicorn web server pid. This is most likely caused by the web server crashing the last time it ran."
+    echo "Removing stale Thin web server pid. This is most likely caused by the web server crashing the last time it ran."
     if ! rm "$web_server_pid_path"; then
       echo "Unable to remove stale pid, exiting."
       exit 1
@@ -141,21 +141,21 @@ exit_if_not_running(){
   fi
 }
 
-## Starts Unicorn and Sidekiq if they're not running.
+## Starts Thin and Sidekiq if they're not running.
 start() {
   check_stale_pids
 
   if [ "$web_status" != "0" -a "$sidekiq_status" != "0" ]; then
-    echo -n "Starting both the GitLab Unicorn and Sidekiq"
+    echo -n "Starting both the GitLab Thin and Sidekiq"
   elif [ "$web_status" != "0" ]; then
     echo -n "Starting GitLab Sidekiq"
   elif [ "$sidekiq_status" != "0" ]; then
-    echo -n "Starting GitLab Unicorn"
+    echo -n "Starting GitLab Thin"
   fi
 
   # Then check if the service is running. If it is: don't start again.
   if [ "$web_status" = "0" ]; then
-    echo "The Unicorn web server already running with pid $wpid, not restarting."
+    echo "The Thin web server already running with pid $wpid, not restarting."
   else
     # Remove old socket if it exists
     rm -f "$socket_path"/gitlab.socket 2>/dev/null
@@ -176,19 +176,19 @@ start() {
   print_status
 }
 
-## Asks the Unicorn and the Sidekiq if they would be so kind as to stop, if not kills them.
+## Asks the Thin and the Sidekiq if they would be so kind as to stop, if not kills them.
 stop() {
   exit_if_not_running
 
   if [ "$web_status" = "0" -a "$sidekiq_status" = "0" ]; then
-    echo -n "Shutting down both Unicorn and Sidekiq"
+    echo -n "Shutting down both Thin and Sidekiq"
   elif [ "$web_status" = "0" ]; then
     echo -n "Shutting down Sidekiq"
   elif [ "$sidekiq_status" = "0" ]; then
-    echo -n "Shutting down Unicorn"
+    echo -n "Shutting down Thin"
   fi
 
-  # If the Unicorn web server is running, tell it to stop;
+  # If the Thin web server is running, tell it to stop;
   if [ "$web_status" = "0" ]; then
      RAILS_ENV=$RAILS_ENV script/web stop
   fi
@@ -224,9 +224,9 @@ print_status() {
     return
   fi
   if [ "$web_status" = "0" ]; then
-      echo "The GitLab Unicorn web server with pid $wpid is running."
+      echo "The GitLab Thin web server with pid $wpid is running."
   else
-      printf "The GitLab Unicorn web server is \033[31mnot running\033[0m.\n"
+      printf "The GitLab Thin web server is \033[31mnot running\033[0m.\n"
   fi
   if [ "$sidekiq_status" = "0" ]; then
       echo "The GitLab Sidekiq job dispatcher with pid $spid is running."
@@ -238,14 +238,14 @@ print_status() {
   fi
 }
 
-## Tells unicorn to reload it's config and Sidekiq to restart
+## Tells Thin to reload it's config and Sidekiq to restart
 reload(){
   exit_if_not_running
   if [ "$wpid" = "0" ];then
-    echo "The GitLab Unicorn Web server is not running thus its configuration can't be reloaded."
+    echo "The GitLab Thin Web server is not running thus its configuration can't be reloaded."
     exit 1
   fi
-  printf "Reloading GitLab Unicorn configuration... "
+  printf "Reloading GitLab Thin configuration... "
   RAILS_ENV=$RAILS_ENV script/web reload
   echo "Done."
   echo "Restarting GitLab Sidekiq since it isn't capable of reloading its config..."
@@ -255,7 +255,7 @@ reload(){
   print_status
 }
 
-## Restarts Sidekiq and Unicorn.
+## Restarts Sidekiq and Thin.
 restart(){
   check_status
   if [ "$web_status" = "0" -o "$sidekiq_status" = "0" ]; then

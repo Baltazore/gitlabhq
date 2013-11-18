@@ -78,7 +78,9 @@ gem "github-markup", "~> 0.7.4", require: 'github/markup'
 gem  "asciidoctor"
 
 # Application server
-gem "unicorn", '~> 4.6.3', group: :unicorn
+# gem "unicorn", '~> 4.6.3', group: :unicorn
+# Use Thin instead Unicorn
+gem 'thin', '~> 1.6', group: :thin
 
 # State machine
 gem "state_machine"
@@ -164,7 +166,7 @@ group :development do
   gem "sdoc"
 
   # thin instead webrick
-  gem 'thin'
+  gem 'thin', '~> 1.6'
 end
 
 group :development, :test do

@@ -1,0 +1,12 @@
+environment: production
+socket: /home/git/gitlab/tmp/sockets/gitlab.socket
+pid: /home/git/gitlab/tmp/pids/thin.pid
+address: 127.0.0.1
+port: 8080
+timeout: 60
+max_conns: 1024
+max_persistent_conns: 100
+require: []
+wait: 60
+servers: 1
+daemonize: true
